@@ -259,19 +259,16 @@ def create_debit():
         if not network == 'Mock':
             fee = float(CFG.get(network, 'FEE'))
             if fee > 0:
-                fee_by_amount_to_send = True if \
-                    CFG.get(network, 'DISCOUNT_FEE_BY') == 'amount_to_send' else False
-
-                fee_by_balance = True if \
-                    CFG.get(network, 'DISCOUNT_FEE_BY') == 'balance' else False
+                fee_by_amount_to_send = CFG.get(network, 'DISCOUNT_FEE_BY') == 'amount_to_send'
+                fee_by_balance = CFG.get(network, 'DISCOUNT_FEE_BY') == 'balance'
 
     txid = 'TBD'
 
-    total_amount_to_send = amount - (amount * fee) if \
-        fee_by_amount_to_send else amount
+    if fee_by_amount_to_send:
+        amount -= (amount * fee)
 
     debit = models.Debit(
-        total_amount_to_send, address, currency,
+        amount, address, currency,
         network, state, reference, txid, current_user.id)
     ses.add(debit)
 
@@ -303,9 +300,9 @@ def create_debit():
             .filter(models.Balance.user_id == dbaddy.user_id)\
             .filter(models.Balance.currency == currency)\
             .order_by(models.Balance.time.desc()).first()
-        bal2.available += total_amount_to_send
-        bal2.total += total_amount_to_send
-        credit = models.Credit(total_amount_to_send, address, currency, network, 'complete', reference, debit.id, dbaddy.user_id)
+        bal2.available += amount
+        bal2.total += amount
+        credit = models.Credit(amount, address, currency, network, 'complete', reference, debit.id, dbaddy.user_id)
         ses.add(bal2)
         ses.add(credit)
         current_app.logger.info("updating balance %s" % jsonify2(bal2, 'Balance'))
@@ -319,7 +316,7 @@ def create_debit():
             return "unable to send funds", 500
     else:
         try:
-            debit.ref_id = ps[network.lower()].send_to_address(address, float(total_amount_to_send) / 1e8)
+            debit.ref_id = ps[network.lower()].send_to_address(address, float(amount) / 1e8)
         except Exception as e:
             print type(e)
             print e
