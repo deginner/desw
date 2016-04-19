@@ -253,20 +253,38 @@ def create_debit():
         network = 'internal'
     elif network == 'internal' and dbaddy is None:
         return "internal address not found", 400
+    else:
+        fee = float(CFG.get(network, 'FEE'))
+        if fee > 0:
+            fee_by_amount_to_send = True if \
+                CFG.get(network, 'DISCOUNT_FEE_BY') == 'amount_to_send' else False
+
+            fee_by_balance = True if \
+                CFG.get(network, 'DISCOUNT_FEE_BY') == 'balance' else False
 
     txid = 'TBD'
-    debit = models.Debit(amount, address, currency, network, state, reference, txid, current_user.id)
+
+    total_amount_to_send = amount - (amount * fee) if \
+        fee_by_amount_to_send else amount
+
+    debit = models.Debit(
+        total_amount_to_send, address, currency,
+        network, state, reference, txid, current_user.id)
     ses.add(debit)
 
     bal = ses.query(models.Balance)\
         .filter(models.Balance.user_id == current_user.id)\
         .filter(models.Balance.currency == currency)\
         .order_by(models.Balance.time.desc()).first()
-    if not bal or bal.available < amount:
+
+    total_amount = amount + (amount * fee) if \
+        fee_by_balance else amount
+
+    if not bal or bal.available < total_amount:
         return "not enough funds", 400
     else:
-        bal.total -= amount
-        bal.available -= amount
+        bal.total -= total_amount
+        bal.available -= total_amount
         ses.add(bal)
         current_app.logger.info("updating balance %s" % jsonify2(bal, 'Balance'))
     try:
