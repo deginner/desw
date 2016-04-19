@@ -243,6 +243,8 @@ def create_debit():
     network = request.jws_payload['data'].get('network')
     reference = request.jws_payload['data'].get('reference')
     state = 'unconfirmed'
+    fee_by_amount_to_send = False
+    fee_by_balance = False
     if network.lower() not in ps:
         return 'Invalid network', 400
 
@@ -254,13 +256,14 @@ def create_debit():
     elif network == 'internal' and dbaddy is None:
         return "internal address not found", 400
     else:
-        fee = float(CFG.get(network, 'FEE'))
-        if fee > 0:
-            fee_by_amount_to_send = True if \
-                CFG.get(network, 'DISCOUNT_FEE_BY') == 'amount_to_send' else False
+        if not network == 'Mock':
+            fee = float(CFG.get(network, 'FEE'))
+            if fee > 0:
+                fee_by_amount_to_send = True if \
+                    CFG.get(network, 'DISCOUNT_FEE_BY') == 'amount_to_send' else False
 
-            fee_by_balance = True if \
-                CFG.get(network, 'DISCOUNT_FEE_BY') == 'balance' else False
+                fee_by_balance = True if \
+                    CFG.get(network, 'DISCOUNT_FEE_BY') == 'balance' else False
 
     txid = 'TBD'
 
