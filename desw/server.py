@@ -300,9 +300,9 @@ def create_debit():
             .filter(models.Balance.user_id == dbaddy.user_id)\
             .filter(models.Balance.currency == currency)\
             .order_by(models.Balance.time.desc()).first()
-        bal2.available += amount
-        bal2.total += amount
-        credit = models.Credit(amount, address, currency, network, 'complete', reference, debit.id, dbaddy.user_id)
+        bal2.available += total_amount_to_send
+        bal2.total += total_amount_to_send
+        credit = models.Credit(total_amount_to_send, address, currency, network, 'complete', reference, debit.id, dbaddy.user_id)
         ses.add(bal2)
         ses.add(credit)
         current_app.logger.info("updating balance %s" % jsonify2(bal2, 'Balance'))
@@ -316,7 +316,7 @@ def create_debit():
             return "unable to send funds", 500
     else:
         try:
-            debit.ref_id = ps[network.lower()].send_to_address(address, float(amount) / 1e8)
+            debit.ref_id = ps[network.lower()].send_to_address(address, float(total_amount_to_send) / 1e8)
         except Exception as e:
             print type(e)
             print e
