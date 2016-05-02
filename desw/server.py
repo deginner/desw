@@ -101,6 +101,7 @@ def get_balance():
     operationId: getBalance
     """
     balsq = ses.query(models.Balance).filter(models.Balance.user_id == current_user.id)
+
     if not balsq:
         return None
     bals = [jsonify2(b, 'Balance') for b in balsq]
@@ -243,6 +244,8 @@ def create_debit():
     network = request.jws_payload['data'].get('network')
     reference = request.jws_payload['data'].get('reference')
     state = 'unconfirmed'
+    fee_by_amount_to_send = False
+    fee_by_balance = False
     if network.lower() not in ps:
         return 'Invalid network', 400
 
@@ -253,20 +256,36 @@ def create_debit():
         network = 'internal'
     elif network == 'internal' and dbaddy is None:
         return "internal address not found", 400
+    else:
+        if not network == 'Mock':
+            fee = float(CFG.get(network, 'FEE'))
+            if fee > 0:
+                fee_by_amount_to_send = CFG.get(network, 'DISCOUNT_FEE_BY') == 'amount_to_send'
+                fee_by_balance = CFG.get(network, 'DISCOUNT_FEE_BY') == 'balance'
 
     txid = 'TBD'
-    debit = models.Debit(amount, address, currency, network, state, reference, txid, current_user.id)
+
+    if fee_by_amount_to_send:
+        amount -= (amount * fee)
+
+    debit = models.Debit(
+        amount, address, currency,
+        network, state, reference, txid, current_user.id)
     ses.add(debit)
 
     bal = ses.query(models.Balance)\
         .filter(models.Balance.user_id == current_user.id)\
         .filter(models.Balance.currency == currency)\
         .order_by(models.Balance.time.desc()).first()
-    if not bal or bal.available < amount:
+
+    amount_with_fee = amount + (amount * fee) if \
+        fee_by_balance else amount
+
+    if not bal or bal.available < amount_with_fee:
         return "not enough funds", 400
     else:
-        bal.total -= amount
-        bal.available -= amount
+        bal.total -= amount_with_fee
+        bal.available -= amount_with_fee
         ses.add(bal)
         current_app.logger.info("updating balance %s" % jsonify2(bal, 'Balance'))
     try:
