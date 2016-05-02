@@ -101,6 +101,7 @@ def get_balance():
     operationId: getBalance
     """
     balsq = ses.query(models.Balance).filter(models.Balance.user_id == current_user.id)
+
     if not balsq:
         return None
     bals = [jsonify2(b, 'Balance') for b in balsq]
@@ -277,14 +278,14 @@ def create_debit():
         .filter(models.Balance.currency == currency)\
         .order_by(models.Balance.time.desc()).first()
 
-    total_amount = amount + (amount * fee) if \
+    amount_with_fee = amount + (amount * fee) if \
         fee_by_balance else amount
 
-    if not bal or bal.available < total_amount:
+    if not bal or bal.available < amount_with_fee:
         return "not enough funds", 400
     else:
-        bal.total -= total_amount
-        bal.available -= total_amount
+        bal.total -= amount_with_fee
+        bal.available -= amount_with_fee
         ses.add(bal)
         current_app.logger.info("updating balance %s" % jsonify2(bal, 'Balance'))
     try:
