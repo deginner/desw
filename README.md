@@ -12,7 +12,7 @@ This server provides a REST API for operation as a service. The authentication i
 
 ##### System Dependencies
 
-`libssl-dev`, `python-dev`, and `libffi-dev` are expected to be installed, which can be accomplished with:
+The OpenSSL, Python and libffi development files are required,  which can be accomplished on Debian based systems with:
 
 `apt-get install libssl-dev python-dev libffi-dev`
 
@@ -50,7 +50,7 @@ LD_LIBRARY_PATH=$(readlink -f ./libsecp256k1/.libs)
 
 `desw` and its related plugins share a common configuration file, the operator should set an environment variable like so:
 
-'export DESW_CONFIG_FILE=/path/to/desw-cfg.ini`
+`export DESW_CONFIG_FILE=/path/to/desw-cfg.ini`
 
 `example_cfg.ini` is provided as a configuration template to be customised by the operator.
  
@@ -97,8 +97,10 @@ debit = client.debit.sendMoney(debit={'amount': int(0.01 * 1e8),
 
 # Running Tests
 
-Mockup based unit tests are located at `test/test_account.py` and run with pytest:
+Unit tests are located at `test/test_account.py` and run with pytest:
 
 `python setup.py pytest`
 
-Each plugin, e.g. `desw-bitcoin`, has its own unit tests located at `test/test_rpc.py`.
+These tests are not dependent on any of the desw plugins.
+
+Each plugin, e.g. [`desw-bitcoin`](https://github.com/GitGuild/desw-bitcoin), has its own unit tests located at `test/test_rpc.py`.
