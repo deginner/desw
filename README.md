@@ -10,6 +10,14 @@ This server provides a REST API for operation as a service. The authentication i
 
 ### Pre-requisites
 
+##### System Dependencies
+
+`libssl-dev`, `python-dev`, and `libffi-dev` are expected to be installed, which can be accomplished with:
+
+`apt-get install libssl-dev python-dev libffi-dev`
+
+##### secp256k1
+
 By default it's expected that [secp256k1](https://github.com/bitcoin/secp256k1) is available, so install it before proceeding; make sure to run `./configure --enable-module-recovery`. If you're using some other library that provides the functionality necessary for this, check the __Using a custom library__ section below.
 
 bitjws can be installed by running `pip install bitjws`.
@@ -36,8 +44,17 @@ LIB_DIR=$(readlink -f ./libsecp256k1/.libs)
 python setup.py -q install
 
 LD_LIBRARY_PATH=$(readlink -f ./libsecp256k1/.libs)
+```
 
-### Plugins
+# Configuration
+
+`desw` and its related plugins share a common configuration file, the operator should set an environment variable like so:
+
+'export DESW_CONFIG_FILE=/path/to/desw-cfg.ini`
+
+`example_cfg.ini` is provided as a configuration template to be customised by the operator.
+ 
+# Plugins
 
 This package is practically useless without installing one or more wallet plugins. The only wallet backend that it comes with is a mockup. Currently supported plugins are: [desw-bitcoin](http://github.com/deginner/desw-bitcoin) and [desw-dash](http://github.com/deginner/desw-dash).
 
@@ -77,3 +94,11 @@ debit = client.debit.sendMoney(debit={'amount': int(0.01 * 1e8),
                               'reference': 'test send money BTC internal',
                               'ref_id': ''}).result()
 ```
+
+# Running Tests
+
+Mockup based unit tests are located at `test/test_account.py` and run with pytest:
+
+`python setup.py pytest`
+
+Each plugin, e.g. `desw-bitcoin`, has its own unit tests located at `test/test_rpc.py`.
