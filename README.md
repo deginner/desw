@@ -97,6 +97,10 @@ debit = client.debit.sendMoney(debit={'amount': int(0.01 * 1e8),
 
 # Running Tests
 
+The unit tests require locally running an instance of the server: 
+
+`python desw/server.py`
+
 Unit tests are located at `test/test_account.py` and run with pytest:
 
 `python setup.py pytest`
