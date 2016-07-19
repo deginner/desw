@@ -1,4 +1,9 @@
+import sys
 from setuptools import setup
+
+setup_requires = []
+if set(['pytest', 'test', 'ptr']).intersection(sys.argv):
+    setup_requires.append('pytest-runner')
 
 classifiers = [
     "License :: OSI Approved :: MIT License",
@@ -16,7 +21,7 @@ setup(
     author='deginner',
     author_email='support@deginner.com',
     description='A centralized ledger suitable for use like a cryptocurrency hot wallet.',
-    setup_requires=['pytest-runner'],
+    setup_requires=setup_requires,
     package_data={'desw': ['static/swagger.json']},
     install_requires=[
         'sqlalchemy>=1.0.9',
